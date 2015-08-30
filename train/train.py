@@ -110,6 +110,9 @@ class Board(object):
             for side2 in range(side1, self.max_domino + 1):
                 self.domino_set.append((side1, side2))
 
+    def empty_hands(self):
+        self.hands = [[] for x in range(self.num_players)]
+
     def get_hand_size(self):
         """
         Gets the appropriate size for the beginning hand.
@@ -303,6 +306,7 @@ class Player(object):
             for idx, domino in enumerate(self.hand):
                 if self.board.check_move(domino, self.player_num, self.player_num):
                     moves[self.player_num].append(idx)
+            return moves[self.player_num]
         # Then check for valid moves on open trains or player's train.
         else:
             for train_idx, train in enumerate(self.board.board):
@@ -310,7 +314,7 @@ class Player(object):
                     if self.board.check_move(domino, train_idx, self.player_num):
                         moves[train_idx].append(dom_idx)
         if moves == blank_moves:
-            return False
+            return []
         return moves
 
     def print_moves(self, moves):
@@ -356,7 +360,7 @@ class Player(object):
             else:
                 break
         while True:
-            print "\n" *5
+            print "\n" * 5
             print self.board
             print self
             print "Dominoes that you may play on train %d:" % train_selection, moves[train_selection]
@@ -419,31 +423,36 @@ or 'back' to select a different train. >  ".format(action, action))
         print "would like to take a chance on starting with a longer train."
         raw_input("Press enter to continue.")
         print "\n" * 10
-        actions = ['draw']
+        actions_available = {"draw": True, "end": False}
+        train_started = False
         while True:
             moves = self.get_moves()
             print(self.board)
             print self
             if moves:
-                print "Valid dominoes:", moves[self.player_num]
-                choice = raw_input("Choose a domino to play or type '{0}' to {0}. > ".format(actions))
-            elif not moves and 'end' in actions:
+                print "Valid dominoes:", moves
+                choice = raw_input("Choose a domino to play or type {0} to {0}. > "
+                                   .format([k for k, v in actions_available.items() if v]))
+                choice = choice.lower()
+            elif actions_available['draw']:
+                choice = raw_input('Would you like to \'draw\' or \'end\'?').lower()
+            else:
                 raw_input("You have no moves left. Press enter to end your turn.")
-                return
-            if choice.lower() in actions:
-                if choice.lower() == 'draw':
-                    del actions[0]
+                break
+            if choice in actions_available.keys() and actions_available[choice]:
+                if choice == 'draw':
+                    actions_available['draw'] = False
                     self.hand.append(self.board.draw())
                     print "You drew {}.".format(self.hand[-1])
-                    moves = self.get_moves()[0]
+                    moves = self.get_moves()
                     if not moves:
                         raw_input("You have no moves available. Press enter to end your turn.")
-                        return
+                        break
                     else:
                         continue
                 else:
                     raw_input("Press enter to end your turn.")
-                    return
+                    break
 
             else:
                 try:
@@ -456,7 +465,10 @@ or 'back' to select a different train. >  ".format(action, action))
                     raw_input("Please choose the index of the domino you wish to play.")
                     continue
             self.play(choice, self.player_num)
-            actions.append('end')
+            train_started = True
+            actions_available['end'] = True
+        if train_started:
+            self.own_train_started = True
 
 
 class AI(Player):
@@ -517,7 +529,7 @@ class Engine(object):
         winner = self.game_over()
         while not winner:
             current_player = self.players[self.board.current_player]
-            turn = self.turn(current_player)
+            self.turn(current_player)
             winner = self.game_over()
             self.board.next_player()
 
@@ -526,9 +538,12 @@ class Engine(object):
         :param current_player:
         :return:
         """
+
         if not current_player.own_train_started:
             current_player.play_first_move()
             return
+        self.board.board[current_player.player_num][0] = \
+            (current_player.player_num, 'open')
         drawn = False
         while True:
             move = current_player.choose_move(drawn)
@@ -550,8 +565,10 @@ class Engine(object):
                 if not self.board.check_double('last'):
                     break
 
+
 class SetupError(Exception):
     pass
+
 
 def main():
     game = Engine(2, 2)

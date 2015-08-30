@@ -245,29 +245,4 @@ def play_test():
 
 
 
-"""
-class Player(__builtin__.object)
- |  Methods defined here:
-
-
- |
- |  play(self, domino_idx, train_num)
- |      Places a domino at the end of a train. Closes train if train == player.
- |      :return:
- |
- |  print_moves(self, moves)
- |      Takes a list of moves and prints it for the player
- |      :param moves:
- |      :return:
- |
- |  update_hand(self)
-|  set_board(self, board)
-|      Creates a board for testing purposes.
-|      :param board:
-|      :return:
-|
-|  shuffle(self)
-|      Shuffles the boneyard.
-"""
-
 
