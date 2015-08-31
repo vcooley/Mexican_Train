@@ -493,63 +493,6 @@ or 'back' to select a different train. >  ".format(action, action))
         first_move_handler()
 
 
-
-
-
-        """
-        __________________
-
-        Old first move function.
-        _______________________
-
-
-        while True:
-            moves = self.get_moves()
-            print(self.board)
-            print self
-            if moves:
-                print "Valid dominoes:", moves
-                choice = raw_input("Choose a domino to play or type {0} to {0}. > "
-                                   .format([k for k, v in actions_available.items() if v]))
-                choice = choice.lower()
-            elif actions_available['draw']:
-                choice = raw_input('Would you like to \'draw\' or \'end\'?').lower()
-            else:
-                raw_input("You have no moves left. Press enter to end your turn.")
-                break
-            if choice in actions_available.keys() and actions_available[choice]:
-                if choice == 'draw':
-                    actions_available['draw'] = False
-                    self.hand.append(self.board.draw())
-                    print "You drew {}.".format(self.hand[-1])
-                    moves = self.get_moves()
-                    if not moves:
-                        raw_input("You have no moves available. Press enter to end your turn.")
-                        break
-                    else:
-                        continue
-                else:
-                    raw_input("Press enter to end your turn.")
-                    break
-
-            else:
-                try:
-                    choice = int(choice)
-                    if choice > len(self.hand) - 1:
-                        raise IndexError
-                except (ValueError, TypeError, IndexError):
-                    print('\n\n')
-                    print("Error. Your selection was not valid.")
-                    raw_input("Please choose the index of the domino you wish to play.")
-                    continue
-            self.play(choice, self.player_num)
-            train_started = True
-            actions_available['end'] = True
-        if train_started:
-            self.own_train_started = True
-            """
-
-
 class AI(Player):
     pass
 
