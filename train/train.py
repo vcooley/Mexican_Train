@@ -17,8 +17,8 @@ First turn:
      *Check if player has a legal move
      *If player cannot move only option is draw
      *Allow player to draw even if he has a legal move
-     If player draws, he can only play the domino drawn if it is valid
-     While player can continue train, allow player to continue train or end turn
+     *If player draws, he can only play the domino drawn if it is valid
+     *While player can continue train, allow player to continue train or end turn
      Add train marker to block other players from playing on player's train.
      Mark first_turn = done
 
@@ -404,27 +404,105 @@ or 'back' to select a different train. >  ".format(action, action))
         Handles the first move of a player.
         :return:
         """
-        # Get all moves but look at only moves on own train.
-        moves = self.get_moves()
-        print "\n" * 10
-        print(self.board)
-        if not moves:
-            print self
-            print "You have no moves available."
-            raw_input("Press enter to draw.")
-            self.hand.append(self.board.draw())
-            moves = self.get_moves()
-            print "You drew {}.".format(self.hand[-1])
+        actions_available = {'played': 0,
+                             'draw': True,
+                             'end': False
+                             }
+
+        def intro(moves):
+            print "\n" * 10
+            print(self.board)
             if not moves:
-                raw_input("You still have no moves available.\nPress enter to end your turn.")
-                return
-        print "\nYou have moves available. You may play as many dominoes as possible on your first hand"
-        print "as long as each domino is played on your own train. You may enter 'draw' to draw if you"
-        print "would like to take a chance on starting with a longer train."
-        raw_input("Press enter to continue.")
-        print "\n" * 10
-        actions_available = {"draw": True, "end": False}
-        train_started = False
+                print self
+                print "You have no moves available."
+                raw_input("Press enter to draw.")
+                self.hand.append(self.board.draw())
+                actions_available['draw'] = False
+                actions_available['end'] = True
+                moves = self.get_moves()
+                print "You drew {}.".format(self.hand[-1])
+                if not moves:
+                    raw_input("You still have no moves available.\nPress enter to end your turn.")
+                    return 'end'
+            print "\nYou have moves available. You may play as many dominoes as possible on your first hand"
+            print "as long as each domino is played on your own train. You may enter 'draw' to draw if you"
+            print "would like to take a chance on starting with a longer train."
+            raw_input("Press enter to continue.")
+            print "\n" * 10
+            return 'success'
+
+        def choice_prompt(moves):
+            print self.board
+            print self
+            if moves:
+                print "Valid dominoes:", moves
+                choice = raw_input("Choose a domino to play or type {0} to {0}. > "
+                                   .format([k for (k, v) in actions_available.items() if v is True]))
+                return choice.lower()
+            elif actions_available['draw']:
+                choice = raw_input('Would you like to \'draw\' or \'end\'?').lower()
+                return choice.lower()
+            else:
+                print '\nYou have no moves left'
+                raw_input('Press enter to end your turn.')
+                return 'end'
+
+        def action_choice(choice, moves):
+            if choice == 'end' and actions_available['end']:
+                return 'end'
+            elif choice == 'end':
+                return 'invalid'
+            if choice == 'draw' and not actions_available['draw']:
+                return 'invalid'
+            elif choice == 'draw':
+                actions_available['draw'] = False
+                actions_available['end'] = True
+                self.hand.append(self.board.draw())
+                print "You drew {}.".format(self.hand[-1])
+                return 'success'
+            return placement_choice(choice, moves)
+
+        def placement_choice(choice, moves):
+            try:
+                choice = int(choice)
+                if choice > len(self.hand) - 1:
+                    raise IndexError
+            except (ValueError, TypeError, IndexError):
+                return 'invalid'
+            if choice not in moves:
+                return 'invalid'
+            self.play(choice, self.player_num)
+            actions_available['played'] += 1
+            actions_available['end'] = True
+            return 'success'
+
+        def invalid_handler():
+            print '\n\nThat move was not valid. Please select a valid move.'
+
+        def first_move_handler():
+            moves = self.get_moves()
+            next_action = intro(moves)
+            while next_action != 'end':
+                if next_action == 'invalid':
+                    invalid_handler()
+                moves = self.get_moves()
+                choice = choice_prompt(moves)
+                next_action = action_choice(choice, moves)
+            if actions_available['played'] > 0:
+                self.own_train_started = True
+        first_move_handler()
+
+
+
+
+
+        """
+        __________________
+
+        Old first move function.
+        _______________________
+
+
         while True:
             moves = self.get_moves()
             print(self.board)
@@ -469,6 +547,7 @@ or 'back' to select a different train. >  ".format(action, action))
             actions_available['end'] = True
         if train_started:
             self.own_train_started = True
+            """
 
 
 class AI(Player):
